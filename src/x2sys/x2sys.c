@@ -343,6 +343,7 @@ int x2sys_initialize (struct GMT_CTRL *GMT, char *TAG, char *fname, struct GMT_I
 		sprintf (line, "%s/%s.%s", TAG, fname, X2SYS_FMT_EXT_OLD);
 		if ((fp = x2sys_fopen (GMT, line, "r")) == NULL) {	/* Even that failed so out of here */
 			gmt_M_free (GMT, X);
+			GMT_Report (GMT->parent, GMT_MSG_ERROR, "%s [%s]\n", x2sys_strerror(GMT, X2SYS_BAD_DEF), line);
 			return (X2SYS_BAD_DEF);
 		}
 	}
