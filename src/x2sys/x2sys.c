@@ -272,7 +272,10 @@ FILE *x2sys_fopen (struct GMT_CTRL *GMT, char *fname, char *mode) {
 	else {			/* Reading: Try both current directory and X2SYS_HOME */
 		if ((fp = fopen (fname, mode)) == NULL) {	/* Not in current directory, try $X2SYS_HOME */
 			x2sys_path (GMT, fname, file);
-			fp = fopen (file, mode);
+			if ((fp = fopen (file, mode)) == NULL) {	/* Try GMT share dir */
+				if (gmt_getsharepath (GMT, "x2sys", fname, "", file, R_OK))	/* Found in GMT x2sys share path */
+					fp = fopen (file, mode);
+			}
 		}
 	}
 	return (fp);

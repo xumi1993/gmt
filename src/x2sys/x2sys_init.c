@@ -446,7 +446,7 @@ EXTERN_MSC int GMT_x2sys_init (void *V_API, int mode, void *args) {
 	(Ctrl->I.active) ? fprintf (fp, " -I%s", Ctrl->I.string) : fprintf (fp, " -I1/1");
 	(GMT->common.R.active[RSET]) ? fprintf (fp, " -R%g/%g/%g/%g", GMT->common.R.wesn[XLO], GMT->common.R.wesn[XHI], GMT->common.R.wesn[YLO], GMT->common.R.wesn[YHI]) : fprintf (fp, " -R0/360/-90/90");
 	fprintf (fp, "\n");
-	if ((error = x2sys_fclose (GMT, tag_file, fp), tag_file))
+	if ((error = x2sys_fclose (GMT, tag_file, fp)))
 		Return (error);
 
 	/* Initialize the system's definition file  */
