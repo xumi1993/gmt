@@ -2835,10 +2835,10 @@ GMT_LOCAL int gmtio_prep_ogr_output (struct GMT_CTRL *GMT, struct GMT_DATASET *D
 
 	/* Determine w/e/s/n via GMT_gmtinfo */
 
-	if (GMT_Open_VirtualFile (GMT->parent, GMT_IS_DATASET, GMT_IS_POINT, GMT_IN, D, in_string) == GMT_NOTSET) {
+	if (GMT_Open_VirtualFile (GMT->parent, GMT_IS_DATASET, GMT_IS_POINT, GMT_IN|GMT_IS_REFERENCE, D, in_string) == GMT_NOTSET) {
 		return (GMT->parent->error);
 	}
-	if (GMT_Open_VirtualFile (GMT->parent, GMT_IS_DATASET, GMT_IS_POINT, GMT_OUT, NULL, out_string) == GMT_NOTSET) {
+	if (GMT_Open_VirtualFile (GMT->parent, GMT_IS_DATASET, GMT_IS_POINT, GMT_OUT|GMT_IS_REFERENCE, NULL, out_string) == GMT_NOTSET) {
 		return (GMT->parent->error);
 	}
 	snprintf (buffer, GMT_BUFSIZ, "-C -fg -<%s ->%s --GMT_HISTORY=false", in_string, out_string);
@@ -4083,8 +4083,8 @@ GMT_LOCAL FILE *gmtio_nc_fopen (struct GMT_CTRL *GMT, const char *filename, cons
 			gmt_set_column (GMT, GMT_IN, i, GMT_IS_RELTIME);
 			gmt_M_memcpy (&time_system, &GMT->current.setting.time_system, 1, struct GMT_TIME_SYSTEM);
 			if (gmt_get_time_system (GMT, units, &time_system) || gmt_init_time_system_structure (GMT, &time_system))
-				GMT_Report (GMT->parent, GMT_MSG_WARNING, "Time units [%s] in NetCDF file not recognised, defaulting to gmt.conf.\n",
-				            units);
+				GMT_Report (GMT->parent, GMT_MSG_WARNING, "Time units [%s] in NetCDF file not recognized, defaulting to %s.\n",
+				            units, GMT_SETTINGS_FILE);
 			/* Determine scale between data and internal time system, as well as the offset (in internal units) */
 			GMT->current.io.scale_factor[i] = GMT->current.io.scale_factor[i] * time_system.scale * GMT->current.setting.time_system.i_scale;
 			GMT->current.io.add_offset[i] *= time_system.scale;	/* Offset in seconds */

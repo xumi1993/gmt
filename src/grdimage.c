@@ -672,7 +672,7 @@ EXTERN_MSC int GMT_grdimage (void *V_API, int mode, void *args) {
 				//if ((Grid_orig[0] = GMT_Read_Data (API, GMT_IS_GRID, GMT_IS_FILE, GMT_IS_SURFACE, GMT_CONTAINER_AND_DATA, GMT->common.R.wesn, Ctrl->In.file[0], NULL)) == NULL)	/* Get srtm grid data */
 				if ((Grid_orig[0] = GMT_Read_Data (API, GMT_IS_GRID, GMT_IS_FILE, GMT_IS_SURFACE, GMT_CONTAINER_AND_DATA, API->tile_wesn, Ctrl->In.file[0], NULL)) == NULL)	/* Get srtm grid data */
 					Return (API->error);
-				if (GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IN, Grid_orig[0], data_grd))
+				if (GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IN|GMT_IS_REFERENCE, Grid_orig[0], data_grd))
 					Return (API->error);
 				got_data_grid = true;
 			}
@@ -846,7 +846,7 @@ EXTERN_MSC int GMT_grdimage (void *V_API, int mode, void *args) {
 		char int_grd[GMT_VF_LEN] = {""};
 		GMT_Report (API, GMT_MSG_INFORMATION, "Derive intensity grid from data grid\n");
 		/* Create a virtual file to hold the intensity grid */
-		if (GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_OUT, NULL, int_grd))
+		if (GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_OUT|GMT_IS_REFERENCE, NULL, int_grd))
 			Return (API->error);
 		/* Prepare the grdgradient arguments using selected -A -N and the data region in effect */
 		sprintf (cmd, "-G%s -A%s -N%s+a%s -R%.16g/%.16g/%.16g/%.16g --GMT_HISTORY=false ",
@@ -917,9 +917,9 @@ EXTERN_MSC int GMT_grdimage (void *V_API, int mode, void *args) {
 
 			char in_string[GMT_VF_LEN] = {""}, out_string[GMT_VF_LEN] = {""};
     		/* Associate the intensity grid with an open virtual file - in_string will then hold the name of this input "file" */
-    		GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IN, Intens_orig, in_string);
+    		GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_IN|GMT_IS_REFERENCE, Intens_orig, in_string);
    			/* Create a virtual file to hold the resampled grid - out_string then holds the name of this output "file" */
-    		GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_OUT, NULL, out_string);
+    		GMT_Open_VirtualFile (API, GMT_IS_GRID, GMT_IS_SURFACE, GMT_OUT|GMT_IS_REFERENCE, NULL, out_string);
 			/* Create the command to do the resampling via the grdsample module */
 			sprintf (cmd, "%s -G%s -I%d+/%d+ --GMT_HISTORY=false", in_string, out_string, n_columns, n_rows);
 			GMT_Report (API, GMT_MSG_INFORMATION, "Calling grdsample with args %s\n", cmd);
@@ -1050,11 +1050,12 @@ EXTERN_MSC int GMT_grdimage (void *V_API, int mode, void *args) {
 
 	if (!Ctrl->In.do_rgb) {	/* Got a single grid so need to convert z to color via a CPT, or a grayscale image */
 		if (Ctrl->C.active) {		/* Read a palette file */
-			unsigned int zmode = gmt_cpt_default (GMT, header_work);
-			if ((P = gmt_get_palette (GMT, Ctrl->C.file, GMT_CPT_OPTIONAL, header_work->z_min, header_work->z_max, Ctrl->C.dz, zmode)) == NULL) {
+			char *cpt = gmt_cpt_default (API, Ctrl->C.file, Ctrl->In.file[0]);
+			if ((P = gmt_get_palette (GMT, cpt, GMT_CPT_OPTIONAL, header_work->z_min, header_work->z_max, Ctrl->C.dz)) == NULL) {
 				GMT_Report (API, GMT_MSG_ERROR, "Failed to read CPT %s.\n", Ctrl->C.file);
 				Return (API->error);	/* Well, that did not go well... */
 			}
+			if (cpt) gmt_M_str_free (cpt);
 			gray_only = (P && P->is_gray);	/* Flag that we are doing a grayscale image below */
 		}
 		else
@@ -1413,16 +1414,16 @@ EXTERN_MSC int GMT_grdimage (void *V_API, int mode, void *args) {
 	}
 
 	for (k = 0; k < n_grids; k++) {	/* If memory grids are passed in we must restore the headers */
-		if (mem_G[k]) {
+		if (mem_G[k] && Grid_orig[k] && header_G[k]) {
 			gmt_copy_gridheader (GMT, Grid_orig[k]->header, header_G[k]);
 			gmt_free_header (API->GMT, &header_G[k]);
 		}
 	}
-	if (mem_I) {
+	if (mem_I && Intens_orig && header_I) {
 		gmt_copy_gridheader (GMT, Intens_orig->header, header_I);
 		gmt_free_header (API->GMT, &header_I);
 	}
-	if (mem_D) {
+	if (mem_D && I && header_D) {
 		gmt_copy_gridheader (GMT, I->header, header_D);
 		gmt_free_header (API->GMT, &header_D);
 	}
